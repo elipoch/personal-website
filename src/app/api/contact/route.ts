@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
           </p>
         </div>
       `,
-      replyTo: email, // So you can reply directly to the sender
+      reply_to: email, // So you can reply directly to the sender
     })
 
     if (error) {
