@@ -10,6 +10,7 @@ export default function Projects() {
       title: 'WIP',
       description: 'Work in progress',
       technologies: ['TO', 'BE', 'ADDED', 'SOON'],
+      links: [],
     },
   ]
 
