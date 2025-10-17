@@ -9,20 +9,52 @@ export default function ContactForm() {
     subject: '',
     message: '',
   })
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle')
+  const [errorMessage, setErrorMessage] = useState('')
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
     })
+    // Clear status when user starts typing
+    if (submitStatus !== 'idle') {
+      setSubmitStatus('idle')
+      setErrorMessage('')
+    }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Handle form submission here
-    console.log('Form submitted:', formData)
-    alert('Thank you for your message! I\'ll get back to you soon.')
-    setFormData({ name: '', email: '', subject: '', message: '' })
+    setIsSubmitting(true)
+    setSubmitStatus('idle')
+    setErrorMessage('')
+
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setSubmitStatus('success')
+        setFormData({ name: '', email: '', subject: '', message: '' })
+      } else {
+        setSubmitStatus('error')
+        setErrorMessage(data.error || 'Failed to send message')
+      }
+    } catch (error) {
+      setSubmitStatus('error')
+      setErrorMessage('Network error. Please try again.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -91,11 +123,29 @@ export default function ContactForm() {
             placeholder="Your message goes here"
           />
         </div>
+        {/* Status Messages */}
+        {submitStatus === 'success' && (
+          <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg font-mono text-sm">
+            ✅ Thank you! Your message has been sent successfully. I'll get back to you soon.
+          </div>
+        )}
+        
+        {submitStatus === 'error' && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg font-mono text-sm">
+            ❌ {errorMessage}
+          </div>
+        )}
+
         <button
           type="submit"
-          className="w-full bg-palette-warm-brown text-white py-3 px-6 rounded-lg font-mono text-sm hover:bg-palette-dark-brown transition-colors"
+          disabled={isSubmitting}
+          className={`w-full py-3 px-6 rounded-lg font-mono text-sm transition-colors ${
+            isSubmitting
+              ? 'bg-palette-soft-gray text-gray-500 cursor-not-allowed'
+              : 'bg-palette-warm-brown text-white hover:bg-palette-dark-brown'
+          }`}
         >
-          SEND MESSAGE
+          {isSubmitting ? 'SENDING...' : 'SEND MESSAGE'}
         </button>
       </form>
     </div>
